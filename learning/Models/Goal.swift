@@ -1,4 +1,4 @@
-
+import Foundation
 
 // هنا احنا عرفنا شيء داخله عدة خيارات وهذي الفايدة من إنم
 enum GoalDuration {
@@ -29,4 +29,16 @@ enum GoalDuration {
         
     }
     
+}
+ 
+struct Goal {
+    var topic : String
+    var duration: GoalDuration // type (enum)
+    var srartDate: Date // type (struct)
+    
+    //"Date" its an Apple/Foundation's struct
+    
+    //":" means the type of startDate is Date
+    
+    //that's example of how different types can be used together inside a struct
 }
