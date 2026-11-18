@@ -2,15 +2,22 @@ import SwiftUI
 import Playgrounds
 
 struct ContentView: View {
+    
+    let goal: Goal
+    
     var body: some View {
-        Text("Hello, world!")
-            .padding()
-            
-    }
+           ActivityView()
+       }
+    
 }
 
 #Preview {
-    ContentView()
+    ContentView(goal: Goal(
+        topic: "Swift",
+        duration: .week,
+        startDate: Date()
+    )
+)
 }
 
 #Playground {

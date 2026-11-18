@@ -2,7 +2,7 @@ import Foundation
 
 // هنا احنا عرفنا شيء داخله عدة خيارات وهذي الفايدة من إنم
 enum GoalDuration {
-    case weak
+    case week
     case month
     case year
     
@@ -13,7 +13,7 @@ enum GoalDuration {
         switch self {
             //سويتش هنا وظيفتها تقارن القيم ولو لقت شيء مطابق تنفذ الي داخله
             //سيلف هنا عشان نعلمها اي اوبجكت بالضبط نبي و تروح له نفسه
-        case .weak:
+        case .week:
             return 7
             
         case .month:
@@ -34,7 +34,7 @@ enum GoalDuration {
 struct Goal {
     var topic : String
     var duration: GoalDuration // type (enum)
-    var srartDate: Date // type (struct)
+    var startDate: Date // type (struct)
     
     //"Date" its an Apple/Foundation's struct
     

@@ -1,9 +1,15 @@
 import SwiftUI
 
 struct OnboardingView: View {
-    @State private var topic = ""
-
+    let onComplete: (Goal) -> Void
+    // هذا المتغير داخله ربط الحاله بالفيو مودل
+    @State private var viewModel = OnboardingVM()
+    
+    
     var body: some View {
+         // هنا احتاج افهم البايندبل زين
+        @Bindable var bindableViewModel = self.viewModel
+        
         ZStack {
             Color(.systemBackground)
                 .ignoresSafeArea()
@@ -37,8 +43,8 @@ struct OnboardingView: View {
                     .font(.system(size: 16))
                     .foregroundStyle(.primary)
                     .padding(.horizontal, 16)
-
-                TextField("What do you want to learn?", text: $topic)
+               //هنا  بروسس ربط الموضوع  من الفيو للفيو مودل الي هو اللوجيك
+                TextField("What do you want to learn?", text: $bindableViewModel.topic )
                     .font(.system(size: 17))
                     .foregroundStyle(.primary)
                     .padding(.horizontal, 16)
@@ -61,31 +67,65 @@ struct OnboardingView: View {
 
                 GlassEffectContainer(spacing: 12) {
                     HStack(spacing: 12) {
-
+                      // هنا ميثود الازرار
                         Button("Week") {
+                            
+                            // هنا وقت ربط الازرار بالحاله
+                            bindableViewModel.selectedDuration = .week
                         }
                         .frame(width: 84, height: 46)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(.primary)
                         .glassEffect(
-                            .regular,
+                            .regular
+                                .tint(
+                                    
+                                    // هنا لو المستخدم اختار الويك يتغير لونه للبرتقالي
+                                   bindableViewModel.selectedDuration == .week
+                                    ? .orange
+                                    : .clear
+                                  ),
+                            
                             in: .capsule
                         )
 
                         Button("Month") {
+                            
+                            bindableViewModel.selectedDuration = .month
                         }
                         .frame(width: 91, height: 46)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(.primary)
                         .glassEffect(
-                            .regular,
+                            .regular
+                                .tint(
+                                    
+                                // هنا لو المستخدم اختار الشهر يتغير لونه للبرتقالي
+                               bindableViewModel.selectedDuration == .month
+                                ? .orange
+                                : .clear
+                              ),
+                            
                             in: .capsule
                         )
 
                         Button("Year") {
+                            
+                            bindableViewModel.selectedDuration = .year
                         }
                         .frame(width: 75, height: 46)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(.primary)
                         .glassEffect(
-                            .regular,
+                            .regular
+                                .tint(
+                                    // هنا لو المستخدم اختار السنه 
+                                    bindableViewModel.selectedDuration == .year
+                                    
+                                    ? .orange
+                                    : .clear
+                                    
+                                ),
+                            
+                            
+                            
                             in: .capsule
                         )
                     }
@@ -97,6 +137,12 @@ struct OnboardingView: View {
                 // MARK: - Start Learning
 
                 Button("Start Learning") {
+                    
+                    bindableViewModel.startLearning()
+                    
+                    if let goal = bindableViewModel.goal {
+                        onComplete(goal)
+                    }
                 }
                 .font(.system(size: 17, weight: .medium))
                 .foregroundStyle(.white)
@@ -116,6 +162,8 @@ struct OnboardingView: View {
                     .padding(.top, 12)
                     .padding(.bottom, 28)
             }
+            .frame(maxHeight: .infinity)
+            
         }
     }
 }
