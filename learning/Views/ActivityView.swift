@@ -1,6 +1,43 @@
 import SwiftUI
 
 struct ActivityView: View {
+    
+    let goal: Goal
+       @State private var viewModel: ActivityVM
+
+    init(goal: Goal) {
+        self.goal = goal
+        _viewModel = State(
+            initialValue: ActivityVM(goal: goal)
+        )}
+    
+    private var today: Date {
+        Date()
+    }
+    
+    
+    private var currentWeek: [Date] {
+           let calendar = Calendar.current
+
+           guard let weekInterval = calendar.dateInterval(
+               of: .weekOfYear,
+               for: today
+           ) else {
+               return []
+           }
+
+           return (0..<7).compactMap {
+               calendar.date(
+                   byAdding: .day,
+                   value: $0,
+                   to: weekInterval.start
+               )
+           }
+       }
+
+    
+    
+    
 
     var body: some View {
         ZStack {
@@ -31,7 +68,7 @@ struct ActivityView: View {
                             }
                             .glassEffect(
                                 .regular
-                                    .tint(.black.opacity(0.85))
+                                    .tint(.black.opacity(0.20))
                                     .interactive(),
                                 in: .circle
                             )
@@ -46,7 +83,7 @@ struct ActivityView: View {
                             }
                             .glassEffect(
                                 .regular
-                                    .tint(.black.opacity(0.85))
+                                    .tint(.black.opacity(0.20))
                                     .interactive(),
                                 in: .circle
                             )
@@ -58,7 +95,14 @@ struct ActivityView: View {
 
                 // MARK: - Date
 
-                Text("Thursday, 24 October")
+                Text(
+                    today.formatted(
+                        .dateTime
+                            .weekday(.wide)
+                            .day()
+                            .month(.wide)
+                    )
+                )
                     .font(.system(size: 17))
                     .foregroundStyle(
                         Color(
@@ -86,13 +130,19 @@ struct ActivityView: View {
                     .frame(height: 18)
 
                     HStack(spacing: 10) {
-                        DayCell(day: "20", state: .completed)
-                        DayCell(day: "21", state: .completed)
-                        DayCell(day: "22", state: .completed)
-                        DayCell(day: "23", state: .completed)
-                        DayCell(day: "24", state: .today)
-                        DayCell(day: "25", state: .normal)
-                        DayCell(day: "26", state: .normal)
+                        ForEach(currentWeek, id: \.self) { date in
+                            DayCell(
+                                day: date.formatted(.dateTime.day()),
+                                state: viewModel.activities(for: date).contains(.learned)
+                                    ? .learned
+                                    : viewModel.activities(for: date).contains(.freeze)
+                                        ? .freeze
+                                        : .normal
+                            )
+                        }
+                    
+                    .padding(.top, 4)
+                    .padding(.top, 4)
                     }
                     .padding(.top, 4)
                 }
@@ -108,7 +158,7 @@ struct ActivityView: View {
                         StatCard(
                             icon: "flame.fill",
                             iconColor: .orange,
-                            value: "4 days",
+                            value: "\(viewModel.learnedCount) \(viewModel.learnedCount == 1 ? "day" : "days")",
                             title: "Learned"
                         )
 
@@ -119,7 +169,7 @@ struct ActivityView: View {
                                 green: 0.827,
                                 blue: 0.996
                             ),
-                            value: "0 days",
+                            value: "\(viewModel.freezeCount) \(viewModel.freezeCount == 1 ? "day" : "days")",
                             title: "Freezed"
                         )
                     }
@@ -130,19 +180,33 @@ struct ActivityView: View {
                 // MARK: - Learned Action
 
                 Button {
-                    // Log as Learned
+                    viewModel.logLearned()
                 } label: {
-                    Text("Log as Learned")
-                        .font(.system(size: 17, weight: .bold))
-                        .foregroundStyle(.white)
-                        .frame(width: 272, height: 272)
+                    Text(
+                        viewModel.canLogLearned
+                            ? "Log as Learned"
+                            : "Logged as Learned"
+                    )
+                    .font(.system(size: 17, weight: .bold))
+                    .foregroundStyle(
+                        viewModel.canLogLearned
+                            ? .white
+                            : .secondary
+                    )
+                    .frame(width: 272, height: 272)
                 }
                 .background(
-                    Color(
-                        red: 1,
-                        green: 0.573,
-                        blue: 0.188
-                    )
+                    viewModel.canLogLearned
+                        ? Color(
+                            red: 1,
+                            green: 0.573,
+                            blue: 0.188
+                        )
+                        : Color(
+                            red: 0.10,
+                            green: 0.10,
+                            blue: 0.10
+                        )
                 )
                 .clipShape(Circle())
                 .overlay {
@@ -158,19 +222,33 @@ struct ActivityView: View {
                 // MARK: - Freeze Action
 
                 Button {
-                    // Freeze for a day
+                    viewModel.logFreeze()
                 } label: {
-                    Text("Freeze for a day")
-                        .font(.system(size: 17, weight: .medium))
-                        .foregroundStyle(.white)
-                        .frame(width: 272, height: 46)
+                    Text(
+                        viewModel.canLogFreeze
+                            ? "Freeze for a day"
+                            : "Freezed for a day"
+                    )
+                    .font(.system(size: 17, weight: .medium))
+                    .foregroundStyle(
+                        viewModel.canLogFreeze
+                            ? .white
+                            : .secondary
+                    )
+                    .frame(width: 272, height: 46)
                 }
                 .background(
-                    Color(
-                        red: 0.235,
-                        green: 0.827,
-                        blue: 0.996
-                    )
+                    viewModel.canLogFreeze
+                        ? Color(
+                            red: 0.235,
+                            green: 0.827,
+                            blue: 0.996
+                        )
+                        : Color(
+                            red: 0.10,
+                            green: 0.10,
+                            blue: 0.10
+                        )
                 )
                 .clipShape(Capsule())
                 .overlay {
@@ -185,7 +263,7 @@ struct ActivityView: View {
 
                 // MARK: - Freeze Usage
 
-                Text("0 out of 2 Freezes used")
+                Text("\(viewModel.freezeCount) out of \(viewModel.freezeLimit) Freezes used")
                     .font(.system(size: 14))
                     .foregroundStyle(
                         Color(
@@ -227,6 +305,9 @@ private struct DayCell: View {
         case normal
         case completed
         case today
+        case learned
+        case freeze
+        
     }
 
     let day: String
@@ -255,7 +336,7 @@ private struct DayCell: View {
                 case .normal:
                     Circle()
                         .fill(.clear)
-
+                    
                 case .completed:
                     Circle()
                         .fill(
@@ -266,7 +347,16 @@ private struct DayCell: View {
                             )
                             .opacity(0.15)
                         )
-
+                case .learned:
+                    Circle()
+                        .fill(
+                            Color(
+                                red: 1,
+                                green: 0.573,
+                                blue: 0.188
+                            )
+                            .opacity(0.15)
+                        )
                 case .today:
                     Circle()
                         .fill(
@@ -275,6 +365,17 @@ private struct DayCell: View {
                                 green: 0.573,
                                 blue: 0.188
                             )
+                        )
+                    
+                case .freeze:
+                    Circle()
+                        .fill(
+                            Color(
+                                red: 0.235,
+                                green: 0.827,
+                                blue: 0.996
+                            )
+                            .opacity(0.15)
                         )
                 }
             }
@@ -329,5 +430,11 @@ private struct StatCard: View {
 // MARK: - Preview
 
 #Preview {
-    ActivityView()
+    ActivityView(
+        goal: Goal(
+            topic: "Swift",
+            duration: .week,
+            startDate: Date()
+        )
+    )
 }

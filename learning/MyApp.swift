@@ -26,6 +26,7 @@ import SwiftUI
                     }
                 }
             }
+            .preferredColorScheme(.dark)
         }
     }
 }
@@ -35,7 +36,7 @@ import SwiftUI
                     .ignoresSafeArea()*/
             
             //هنا خليته يتجاهل اختيارات النظام ويكون وضع التطبيق دارك دايركت
-            //.preferredColorScheme(.dark)
+            
         
 
 

@@ -6,7 +6,7 @@ struct ContentView: View {
     let goal: Goal
     
     var body: some View {
-           ActivityView()
+           ActivityView(goal: goal)
        }
     
 }
