@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="Assets/poster.png" alt="Learning Journey app poster" width="100%">
+  <img src="poster.pnga"="Learning Journey app poster" width="100%">
 </p>
 
 <h1 align="center">🔥 Learning Journey</h1>
