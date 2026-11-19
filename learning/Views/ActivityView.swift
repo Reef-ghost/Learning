@@ -1,15 +1,29 @@
 import SwiftUI
+import SwiftData
 
 struct ActivityView: View {
     
     let goal: Goal
-       @State private var viewModel: ActivityVM
-
-    init(goal: Goal) {
+    let onGoalChanged: (Goal) -> Void
+    @State private var viewModel: ActivityVM
+    @State private var showCalendar = false
+    @State private var showChangeGoal = false
+    
+    init(
+        goal: Goal,
+        modelContext: ModelContext,
+        onGoalChanged: @escaping (Goal) -> Void
+    ) {
         self.goal = goal
+        self.onGoalChanged = onGoalChanged
+
         _viewModel = State(
-            initialValue: ActivityVM(goal: goal)
-        )}
+            initialValue: ActivityVM(
+                goal: goal,
+                modelContext: modelContext
+            )
+        )
+    }
     
     private var today: Date {
         Date()
@@ -17,49 +31,50 @@ struct ActivityView: View {
     
     
     private var currentWeek: [Date] {
-           let calendar = Calendar.current
-
-           guard let weekInterval = calendar.dateInterval(
-               of: .weekOfYear,
-               for: today
-           ) else {
-               return []
-           }
-
-           return (0..<7).compactMap {
-               calendar.date(
-                   byAdding: .day,
-                   value: $0,
-                   to: weekInterval.start
-               )
-           }
-       }
-
+        let calendar = Calendar.current
+        
+        guard let weekInterval = calendar.dateInterval(
+            of: .weekOfYear,
+            for: today
+        ) else {
+            return []
+        }
+        
+        return (0..<7).compactMap {
+            calendar.date(
+                byAdding: .day,
+                value: $0,
+                to: weekInterval.start
+            )
+        }
+    }
     
     
     
-
+    
+    
     var body: some View {
+        
         ZStack {
             Color.black
                 .ignoresSafeArea()
-
+            
             VStack(alignment: .leading, spacing: 0) {
-
+                
                 // MARK: - Navigation Bar
-
+                
                 HStack(spacing: 0) {
                     Text("Activity")
                         .font(.system(size: 34, weight: .bold))
                         .foregroundStyle(.white)
-
+                    
                     Spacer()
-
+                    
                     GlassEffectContainer(spacing: 12) {
                         HStack(spacing: 12) {
-
-                            Button {
-                                // Calendar
+                            
+                            Button{
+                                showCalendar = true
                             } label: {
                                 Image(systemName: "calendar")
                                     .font(.system(size: 20, weight: .semibold))
@@ -72,9 +87,9 @@ struct ActivityView: View {
                                     .interactive(),
                                 in: .circle
                             )
-
+                            
                             Button {
-                                // Edit
+                                showChangeGoal = true
                             } label: {
                                 Image(systemName: "pencil")
                                     .font(.system(size: 20, weight: .semibold))
@@ -90,11 +105,12 @@ struct ActivityView: View {
                         }
                     }
                 }
+                
                 .padding(.horizontal, 15)
                 .frame(height: 46)
-
+                
                 // MARK: - Date
-
+                
                 Text(
                     today.formatted(
                         .dateTime
@@ -103,21 +119,21 @@ struct ActivityView: View {
                             .month(.wide)
                     )
                 )
-                    .font(.system(size: 17))
-                    .foregroundStyle(
-                        Color(
-                            red: 0.557,
-                            green: 0.557,
-                            blue: 0.576
-                        )
+                .font(.system(size: 17))
+                .foregroundStyle(
+                    Color(
+                        red: 0.557,
+                        green: 0.557,
+                        blue: 0.576
                     )
-                    .padding(.horizontal, 15)
-                    .frame(width: 393, height: 27, alignment: .leading)
-
+                )
+                .padding(.horizontal, 15)
+                .frame(width: 393, height: 27, alignment: .leading)
+                
                 // MARK: - Calendar
-
+                
                 VStack(spacing: 0) {
-
+                    
                     HStack(spacing: 10) {
                         WeekDayHeader("S")
                         WeekDayHeader("M")
@@ -128,40 +144,40 @@ struct ActivityView: View {
                         WeekDayHeader("S")
                     }
                     .frame(height: 18)
-
+                    
                     HStack(spacing: 10) {
                         ForEach(currentWeek, id: \.self) { date in
                             DayCell(
                                 day: date.formatted(.dateTime.day()),
                                 state: viewModel.activities(for: date).contains(.learned)
-                                    ? .learned
-                                    : viewModel.activities(for: date).contains(.freeze)
-                                        ? .freeze
-                                        : .normal
+                                ? .learned
+                                : viewModel.activities(for: date).contains(.freeze)
+                                ? .freeze
+                                : .normal
                             )
                         }
-                    
-                    .padding(.top, 4)
-                    .padding(.top, 4)
+                        
+                        .padding(.top, 4)
+                        .padding(.top, 4)
                     }
                     .padding(.top, 4)
                 }
                 .frame(width: 365, height: 70)
                 .padding(.leading, 14)
                 .padding(.top, 12)
-
+                
                 // MARK: - Statistics
-
+                
                 GlassEffectContainer(spacing: 12) {
                     HStack(spacing: 12) {
-
+                        
                         StatCard(
                             icon: "flame.fill",
                             iconColor: .orange,
                             value: "\(viewModel.learnedCount) \(viewModel.learnedCount == 1 ? "day" : "days")",
                             title: "Learned"
                         )
-
+                        
                         StatCard(
                             icon: "snowflake",
                             iconColor: Color(
@@ -176,37 +192,37 @@ struct ActivityView: View {
                 }
                 .padding(.horizontal, 14)
                 .padding(.top, 8)
-
+                
                 // MARK: - Learned Action
-
+                
                 Button {
                     viewModel.logLearned()
                 } label: {
                     Text(
                         viewModel.canLogLearned
-                            ? "Log as Learned"
-                            : "Logged as Learned"
+                        ? "Log as Learned"
+                        : "Logged as Learned"
                     )
                     .font(.system(size: 17, weight: .bold))
                     .foregroundStyle(
                         viewModel.canLogLearned
-                            ? .white
-                            : .secondary
+                        ? .white
+                        : .secondary
                     )
                     .frame(width: 272, height: 272)
                 }
                 .background(
                     viewModel.canLogLearned
-                        ? Color(
-                            red: 1,
-                            green: 0.573,
-                            blue: 0.188
-                        )
-                        : Color(
-                            red: 0.10,
-                            green: 0.10,
-                            blue: 0.10
-                        )
+                    ? Color(
+                        red: 1,
+                        green: 0.573,
+                        blue: 0.188
+                    )
+                    : Color(
+                        red: 0.10,
+                        green: 0.10,
+                        blue: 0.10
+                    )
                 )
                 .clipShape(Circle())
                 .overlay {
@@ -218,37 +234,37 @@ struct ActivityView: View {
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.top, 48)
-
+                
                 // MARK: - Freeze Action
-
+                
                 Button {
                     viewModel.logFreeze()
                 } label: {
                     Text(
                         viewModel.canLogFreeze
-                            ? "Freeze for a day"
-                            : "Freezed for a day"
+                        ? "Freeze for a day"
+                        : "Freezed for a day"
                     )
                     .font(.system(size: 17, weight: .medium))
                     .foregroundStyle(
                         viewModel.canLogFreeze
-                            ? .white
-                            : .secondary
+                        ? .white
+                        : .secondary
                     )
                     .frame(width: 272, height: 46)
                 }
                 .background(
                     viewModel.canLogFreeze
-                        ? Color(
-                            red: 0.235,
-                            green: 0.827,
-                            blue: 0.996
-                        )
-                        : Color(
-                            red: 0.10,
-                            green: 0.10,
-                            blue: 0.10
-                        )
+                    ? Color(
+                        red: 0.235,
+                        green: 0.827,
+                        blue: 0.996
+                    )
+                    : Color(
+                        red: 0.10,
+                        green: 0.10,
+                        blue: 0.10
+                    )
                 )
                 .clipShape(Capsule())
                 .overlay {
@@ -260,9 +276,9 @@ struct ActivityView: View {
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.top, 48)
-
+                
                 // MARK: - Freeze Usage
-
+                
                 Text("\(viewModel.freezeCount) out of \(viewModel.freezeLimit) Freezes used")
                     .font(.system(size: 14))
                     .foregroundStyle(
@@ -276,8 +292,19 @@ struct ActivityView: View {
                     .padding(.top, 16)
             }
         }
-    }
-}
+        .sheet(isPresented: $showCalendar) {
+            CalendarView()
+        }
+        .sheet(isPresented: $showChangeGoal) {
+            ChangeGoalView(
+                currentGoal: goal
+            ) { newGoal in
+                onGoalChanged(newGoal)
+                showChangeGoal = false
+            }
+        }
+    }}
+
 
 // MARK: - Week Day Header
 
@@ -430,11 +457,21 @@ private struct StatCard: View {
 // MARK: - Preview
 
 #Preview {
-    ActivityView(
+    let container = try! ModelContainer(
+        for: Activity.self,
+        configurations: ModelConfiguration(isStoredInMemoryOnly: true)
+    )
+    
+    return ActivityView(
         goal: Goal(
             topic: "Swift",
             duration: .week,
             startDate: Date()
-        )
+        ),
+        modelContext: container.mainContext,
+        onGoalChanged: { newGoal in
+            print(newGoal)
+        }
     )
+    
 }

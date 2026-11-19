@@ -1,13 +1,25 @@
 import Foundation
 import Observation
+import SwiftData
 
 @Observable
 final class ActivityVM {
     var goal: Goal
     var activities: [Activity] = []
-    init(goal: Goal) {
-            self.goal = goal
-        }
+    
+    private let modelContext: ModelContext
+
+    init(goal: Goal, modelContext: ModelContext) {
+        self.goal = goal
+        self.modelContext = modelContext
+
+        loadActivities()
+    }
+    private func loadActivities() {
+        let descriptor = FetchDescriptor<Activity>()
+
+        activities = (try? modelContext.fetch(descriptor)) ?? []
+    }
 
     private var learnedToday: Bool {
 
@@ -48,32 +60,38 @@ final class ActivityVM {
 
     // يتعرف لو تم اللوق از ليرند
     func logLearned() {
-
         guard canLogLearned else {
             return
         }
 
-        activities.append(
-            Activity(
-                date: Date(),
-                type: .learned
-            )
+        let activity = Activity(
+            date: Date(),
+            type: .learned
         )
+
+        modelContext.insert(activity)
+
+        try? modelContext.save()
+        
+        activities.append(activity)
     }
 
     // معرف الافريز لو تم استخدامها
     func logFreeze() {
-
         guard canLogFreeze else {
             return
         }
 
-        activities.append(
-            Activity(
-                date: Date(),
-                type: .freeze
-            )
+        let activity = Activity(
+            date: Date(),
+            type: .freeze
         )
+
+        modelContext.insert(activity)
+
+        try? modelContext.save()
+        
+        activities.append(activity)
     }
 
     // عداد الاتعلم والفريز
